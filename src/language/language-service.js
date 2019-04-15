@@ -7,10 +7,10 @@ const LanguageService = {
         'language.name',
         'language.user_id',
         'language.head',
-        'language.total_score',
+        'language.total_score'
       )
       .where('language.user_id', user_id)
-      .first()
+      .first();
   },
 
   getLanguageWords(db, language_id) {
@@ -24,7 +24,7 @@ const LanguageService = {
         'next',
         'memory_value',
         'correct_count',
-        'incorrect_count',
+        'incorrect_count'
       )
       .where({ language_id })
   },
@@ -38,4 +38,4 @@ const LanguageService = {
   }
 }
 
-module.exports = LanguageService
+module.exports = LanguageService;

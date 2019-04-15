@@ -1,3 +1,6 @@
+--  psql -U spacerep -d spacerep -f seeds/seed.tables.sql
+--  psql -U spacerep -d spacerep_test -f seeds/seed.tables.sql
+
 BEGIN;
 
 TRUNCATE
