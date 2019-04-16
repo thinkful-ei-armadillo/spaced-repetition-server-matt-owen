@@ -4,6 +4,7 @@ const { requireAuth } = require('../middleware/jwt-auth')
 const jsonBodyParser = express.json();
 const languageRouter = express.Router()
 const llMaker = require('../helpers/LinkListMaker');
+const llHelpers = require('../helpers/LinkListHelpers');
 
 languageRouter
   .use(requireAuth)
@@ -75,6 +76,14 @@ languageRouter
         req.language.id,
       )
       let wordLinkedList = llMaker(words);
+      const { guess } = req.body;
+
+      if(!guess) {
+        res.status(400).json({error: `Missing 'guess' in request body`})
+      }
+      else {
+        
+      }
 
       next()
 
