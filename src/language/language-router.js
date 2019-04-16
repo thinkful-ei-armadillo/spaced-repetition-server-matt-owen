@@ -3,6 +3,7 @@ const LanguageService = require('./language-service')
 const { requireAuth } = require('../middleware/jwt-auth')
 
 const languageRouter = express.Router()
+const llMaker = require('../helpers/LinkListMaker');
 
 languageRouter
   .use(requireAuth)
@@ -69,7 +70,13 @@ languageRouter
   .use(requireAuth)
   .post('/guess', async (req, res, next) => {
     try{
-      
+      const words = await LanguageService.getLanguageWords(
+        req.app.get('db'),
+        req.language.id,
+      )
+      let wordLinkedList = llMaker(words);
+
+      next()
 
     } catch(error){
       next(error);
