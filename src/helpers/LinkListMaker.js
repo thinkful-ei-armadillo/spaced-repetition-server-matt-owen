@@ -1,12 +1,21 @@
 const LinkedList = require('./LinkList');
 
-const linkListMaker = arr => {
+const linkListMaker = (arr, headNode) => {
   const ll = new LinkedList();
-  let currNode = arr[0];
+
+  let currNode = arr.find(item => {
+    return item.id === headNode.id;
+  });
 
   while (currNode !== null) {
     ll.insertLast(currNode);
-    currNode = currNode.next;
+    if (currNode.next !== null) {
+      currNode = arr.find(item => {
+        return item.id === currNode.next;
+      });
+    } else {
+      currNode = null;
+    }
   }
 
   return ll;

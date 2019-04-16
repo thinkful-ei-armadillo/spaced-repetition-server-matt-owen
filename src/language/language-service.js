@@ -26,22 +26,27 @@ const LanguageService = {
         'correct_count',
         'incorrect_count'
       )
-      .where({ language_id })
+      .where({ language_id });
   },
-  getHead(db, user_id) {
+  getLanguageHead(db, user_id) {
     return db
       .from('language')
-      .join('word','word.language_id', 'language.id')
+      .select('head')
+      .where('user_id', user_id);
+  },
+  getHead(db, head) {
+    return db
+      .from('language')
+      .join('word', 'word.language_id', 'language.id')
       .select('*')
-      .where('language.user_id', user_id)
-      .first()
+      .where('word.id', head);
   },
   updateLanguageWords(db, word, updateWord) {
     return db
       .from('word')
       .where('translation', word)
-      .update(updateWord)
+      .update(updateWord);
   }
-}
+};
 
 module.exports = LanguageService;

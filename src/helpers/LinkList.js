@@ -27,6 +27,7 @@ class LinkedList {
   /**Inserts a new node after a node containing the key.*/
   insertAfter(key, itemToInsert) {
     let tempNode = this.head;
+    // {original: 'word'}
     while (tempNode !== null && tempNode.value !== key) {
       tempNode = tempNode.next;
     }
@@ -50,7 +51,7 @@ class LinkedList {
       currNode = currNode.next;
     }
     if (currNode === null) {
-      console.log("Node not found to insert");
+      console.log('Node not found to insert');
       return;
     }
     //insert between current and previous
@@ -58,7 +59,7 @@ class LinkedList {
   }
   insertAt(nthPosition, itemToInsert) {
     if (nthPosition < 0) {
-      throw new Error("Position error");
+      throw new Error('Position error');
     }
     if (nthPosition === 0) {
       this.insertFirst(itemToInsert);
@@ -97,7 +98,7 @@ class LinkedList {
       currNode = currNode.next;
     }
     if (currNode === null) {
-      console.log("Item not found");
+      console.log('Item not found');
       return;
     }
     previousNode.next = currNode.next;
