@@ -77,12 +77,37 @@ languageRouter
       )
       let wordLinkedList = llMaker(words);
       const { guess } = req.body;
-
+        console.log(guess)
       if(!guess) {
         res.status(400).json({error: `Missing 'guess' in request body`})
       }
       else {
-        
+        let answer = wordLinkedList.head
+        let { correct_count, incorrect_count } = answer.value
+
+        if(answer.value.translation === guess){
+          
+          correct_count++;
+          res.status(200).json({
+            nextWord: answer.next.value.original,
+            totalScore: correct_count - incorrect_count,
+            wordCorrectCount: correct_count,
+            wordIncorrectCount: incorrect_count,
+            answer: answer.value.translation,
+            isCorrect: true
+          })
+        }
+        else{
+          incorrect_count++
+          res.status(200).json({
+            nextWord: answer.next.value.original,
+            totalScore: correct_count - incorrect_count,
+            wordCorrectCount: correct_count,
+            wordIncorrectCount: incorrect_count,
+            answer: answer.value.translation,
+            isCorrect: false
+          })
+        }
       }
 
       next()
