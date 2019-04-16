@@ -1,7 +1,7 @@
 const express = require('express')
 const LanguageService = require('./language-service')
 const { requireAuth } = require('../middleware/jwt-auth')
-
+const jsonBodyParser = express.json();
 const languageRouter = express.Router()
 const llMaker = require('../helpers/LinkListMaker');
 
@@ -68,7 +68,7 @@ languageRouter
 
 languageRouter
   .use(requireAuth)
-  .post('/guess', async (req, res, next) => {
+  .post('/guess', jsonBodyParser, async (req, res, next) => {
     try{
       const words = await LanguageService.getLanguageWords(
         req.app.get('db'),
