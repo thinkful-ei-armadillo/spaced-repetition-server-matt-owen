@@ -66,9 +66,14 @@ languageRouter
   })
 
 languageRouter
+  .use(requireAuth)
   .post('/guess', async (req, res, next) => {
-    // implement me
-    res.send('implement me!')
+    try{
+      
+
+    } catch(error){
+      next(error);
+    }
   })
 
 module.exports = languageRouter
