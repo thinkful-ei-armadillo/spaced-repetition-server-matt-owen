@@ -1,13 +1,15 @@
 const LinkedList = require('./LinkList');
 
-const linkListMaker = (arr) => {
+const linkListMaker = arr => {
   const ll = new LinkedList();
+  let currNode = arr[0];
 
-  for(let i = 0; i < arr.length ; i++) {
-    ll.insertLast(arr[i])
+  while (currNode !== null) {
+    ll.insertLast(currNode);
+    currNode = currNode.next;
   }
 
   return ll;
-}
+};
 
 module.exports = linkListMaker;
