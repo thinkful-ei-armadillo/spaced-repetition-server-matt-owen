@@ -44,8 +44,14 @@ const LanguageService = {
   updateLanguageWords(db, word, updateWord) {
     return db
       .from('word')
-      .where('translation', word)
+      .where('original', word)
       .update(updateWord);
+  },
+  updateLanguage(db, user_id, updatedData) {
+    return db
+      .from('language')
+      .where('language.user_id', user_id)
+      .update(updatedData);
   }
 };
 
