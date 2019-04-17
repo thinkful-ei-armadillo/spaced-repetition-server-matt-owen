@@ -6,6 +6,8 @@ const languageRouter = express.Router();
 const llMaker = require('../helpers/LinkListMaker');
 const llHelpers = require('../helpers/LinkListHelpers');
 
+// function updateNexts(ll, llprevHeadValue) {}
+
 languageRouter.use(requireAuth).use(async (req, res, next) => {
 	try {
 		const language = await LanguageService.getUsersLanguage(
@@ -112,20 +114,42 @@ languageRouter
 				});
 				// mutate head location
 				let llLength = llHelpers.size(ll);
-				let llprevHead = ll.head.value;
+				let llprevHeadValue = ll.head.value;
 				ll.remove(ll.head);
 				// simulate decreased length of ll after removing head
 				llLength--;
 
 				// find the (memory_value - 1)th element, and places this one after it
 				// this should update nexts
-				console.log(llprevHead);
-				let counter = 0;
-				while (counter < llHelpers.size(ll)) {}
-
-				if (llprevHead.memory_value < llLength) {
+				// console.log(llprevHeadValue);
+				// let counter = 0;
+				// while (counter < llHelpers.size(ll)) {}
+				// console.log('here');
+				if (llprevHeadValue.memory_value < llLength) {
+					// console.log('before insert');
 					// updating node.next value, but not node.value.next
-					ll.insertAt(memory_value, llprevHead);
+					// console.log(`mvalue is ${memory_value}`);
+					ll.insertAt(llprevHeadValue.memory_value, llprevHeadValue);
+					// console.log('before update next');
+					// can we do object ===?
+					let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
+					let updatedPrevNode = prevNode;
+
+					updatedPrevNode.value.next = llprevHeadValue.id;
+					// console.log(llprevHeadValue.id);
+					console.log('updatedprevnodevalue');
+					console.log(updatedPrevNode.value);
+					console.log('----------------------');
+					ll.remove(prevNode);
+					ll.insertLast(updatedPrevNode);
+
+					let currNode = ll.find(llprevHeadValue);
+					let updatedCurrNode = currNode;
+					console.log(updatedCurrNode);
+					updatedCurrNode.value.next = currNode.next.value.id;
+					ll.remove(currNode);
+					ll.insertLast(updatedCurrNode);
+					// console.log('after updatenext');
 					// findPrevious node, update next to llprevHead.id
 					// ll.remove(ll.prevNode) ... remove prevnode from ll, re-add on end with new values (insertLast(updatedPrevNode))
 					// ll.find ... find llprevHeadNode, to check its ll.next.id, updatedllprevHeadNodeValue = {...llprevHeadNode.value, next: ll.next.id}
@@ -134,19 +158,38 @@ languageRouter
 					// ll is read, order of ll doesnt matter because actual word question "nexts"
 					// are different from node nexts, aka ll.value.next !== ll.next
 
-					// database words are updated with ll.value.nexts, sequence of ll
-				} else if (llprevHead.memory_value >= llLength) {
-					ll.insertLast(llprevHead);
+					// database words are updated with ll.value.nexts
+				} else if (llprevHeadValue.memory_value >= llLength) {
+					ll.insertLast(llprevHeadValue);
+					// console.log('here');
+					let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
+					let updatedPrevNode = prevNode;
+
+					updatedPrevNode.value.next = llprevHeadValue.id;
+					// console.log(llprevHeadValue.id);
+					console.log('updatedprevnodevalue');
+					console.log(updatedPrevNode.value);
+					console.log('----------------------');
+					ll.remove(prevNode);
+					ll.insertLast(updatedPrevNode);
+
+					let currNode = ll.find(ll, llprevHeadValue);
+					let updatedCurrNode = currNode;
+					console.log(updatedCurrNode);
+					updatedCurrNode.value.next = currNode.next.value.id;
+					ll.remove(currNode);
+					ll.insertLast(updatedCurrNode);
 				}
 				// llHelpers.displayList(ll);
 				// Persist the linked list => db(words)
 				let currNode = ll.head;
-				// console.log(currNode);
+
 				while (currNode !== null) {
+					// console.log(currNode);
 					await LanguageService.updateLanguageWords(
 						req.app.get('db'),
 						currNode.value.original,
-						{ ...currNode.value }
+						currNode.value
 					);
 					currNode = currNode.next;
 					if (currNode === null) {
