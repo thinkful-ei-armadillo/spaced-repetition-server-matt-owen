@@ -6,7 +6,23 @@ const languageRouter = express.Router();
 const llMaker = require('../helpers/LinkListMaker');
 const llHelpers = require('../helpers/LinkListHelpers');
 
-// function updateNexts(ll, llprevHeadValue) {}
+function updateNexts(ll, llprevHeadValue) {
+	let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
+
+	let updatedPrevNode = prevNode;
+
+	updatedPrevNode.value.next = llprevHeadValue.id;
+
+	ll.remove(prevNode.value);
+	ll.insertLast(updatedPrevNode.value);
+
+	let currNode = ll.find(llprevHeadValue);
+	let updatedCurrNode = currNode;
+
+	updatedCurrNode.value.next = currNode.next.value.id;
+	ll.remove(currNode.value);
+	ll.insertLast(updatedCurrNode.value);
+}
 
 languageRouter.use(requireAuth).use(async (req, res, next) => {
 	try {
@@ -115,68 +131,19 @@ languageRouter
 				// mutate head location
 				let llLength = llHelpers.size(ll);
 				let llprevHeadValue = ll.head.value;
-				console.log('removing ll.head');
 				ll.remove(ll.head);
 				// simulate decreased length of ll after removing head
 				llLength--;
 
-				// find the (memory_value - 1)th element, and places this one after it
-				// this should update nexts
-				// console.log(llprevHeadValue);
-				// let counter = 0;
-				// while (counter < llHelpers.size(ll)) {}
-
 				if (llprevHeadValue.memory_value < llLength) {
 					ll.insertAt(llprevHeadValue.memory_value, llprevHeadValue);
-
-					let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
-					console.log(prevNode);
-					let updatedPrevNode = prevNode;
-
-					updatedPrevNode.value.next = llprevHeadValue.id;
-
-					console.log('removing prevnode correct');
-
-					ll.remove(prevNode.value);
-					ll.insertLast(updatedPrevNode.value);
-
-					let currNode = ll.find(llprevHeadValue);
-					let updatedCurrNode = currNode;
-
-					updatedCurrNode.value.next = currNode.next.value.id;
-					console.log('removing current word node correct');
-					ll.remove(currNode.value);
-					ll.insertLast(updatedCurrNode.value);
-
-					// findPrevious node, update next to llprevHead.id
-					// ll.remove(ll.prevNode) ... remove prevnode from ll, re-add on end with new values (insertLast(updatedPrevNode))
-					// ll.find ... find llprevHeadNode, to check its ll.next.id, updatedllprevHeadNodeValue = {...llprevHeadNode.value, next: ll.next.id}
-					// remove newly inserted llprevHeadNode, insert updated llprevHead (with new next) at end of ll
-
-					// ll is read, order of ll doesnt matter because actual word question "nexts"
-					// are different from node nexts, aka ll.value.next !== ll.next
-
-					// database words are updated with ll.value.nexts
+					updateNexts(ll, llprevHeadValue);
 				} else if (llprevHeadValue.memory_value >= llLength) {
 					ll.insertLast(llprevHeadValue);
-
-					let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
-					let updatedPrevNode = prevNode;
-
-					updatedPrevNode.value.next = llprevHeadValue.id;
-
-					ll.remove(prevNode.value);
-					ll.insertLast(updatedPrevNode.value);
-
-					let currNode = ll.find(ll, llprevHeadValue);
-					let updatedCurrNode = currNode;
-
-					updatedCurrNode.value.next = currNode.next.value.id;
-					ll.remove(currNode.value);
-					ll.insertLast(updatedCurrNode.value);
+					updateNexts(ll, llprevHeadValue);
 				}
-				llHelpers.displayList(ll);
-				// Persist the linked list => db(words)
+
+				// persist the updated word order
 
 				let currNode = ll.head;
 				while (currNode.next !== null) {
@@ -200,19 +167,20 @@ languageRouter
 					total_score: total_score,
 					head: ll.head.value.id
 				};
-				//
+
 				await LanguageService.updateLanguage(
 					req.app.get('db'),
 					req.user.id,
 					updatedLanguage
 				);
 				// send correct/incorrect response
+				// the difference is isCorrect
 				if (guess === translation) {
 					res.status(200).json({
 						nextWord: ll.head.value.original,
 						totalScore: total_score,
-						wordCorrectCount: correct_count,
-						wordIncorrectCount: incorrect_count,
+						wordCorrectCount: ll.head.value.correct_count,
+						wordIncorrectCount: ll.head.value.incorrect_count,
 						answer: translation,
 						isCorrect: true
 					});
@@ -220,8 +188,8 @@ languageRouter
 					res.status(200).json({
 						nextWord: ll.head.value.original,
 						totalScore: total_score,
-						wordCorrectCount: correct_count,
-						wordIncorrectCount: incorrect_count,
+						wordCorrectCount: ll.head.value.correct_count,
+						wordIncorrectCount: ll.head.value.incorrect_count,
 						answer: translation,
 						isCorrect: false
 					});
