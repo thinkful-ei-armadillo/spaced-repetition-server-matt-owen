@@ -81,7 +81,9 @@ languageRouter
 			let head = await LanguageService.getHead(req.app.get('db'), languageHead);
 			// head is the node, which will be ll.head
 			head = head[0];
+
 			let ll = llMaker(words, head);
+			// llHelpers.displayList(ll);
 
 			if (!guess) {
 				res.status(400).json({ error: `Missing 'guess' in request body` });
@@ -102,28 +104,37 @@ languageRouter
 					incorrect_count++;
 					memory_value = 1;
 				}
-
+				// write changes into head
+				Object.assign(ll.head.value, {
+					correct_count,
+					incorrect_count,
+					memory_value
+				});
 				// mutate head location
 				let llLength = words.length;
+				let llprevHead = ll.head.value;
 				ll.remove(ll.head);
 				// simulate decreased length of ll after removing head
 				llLength--;
 
 				// find the (memory_value - 1)th element, and places this one after it
-				if (memory_value < llLength) {
-					ll.insertAt(memory_value, head);
-				} else if (memory_value >= llLength) {
-					ll.insertLast(head);
+				// this should update nexts
+				console.log(llprevHead);
+				if (llprevHead.memory_value < llLength) {
+					// updating node.next value, but not node.value.next
+					ll.insertAt(memory_value, llprevHead);
+				} else if (llprevHead.memory_value >= llLength) {
+					ll.insertLast(llprevHead);
 				}
-
+				// llHelpers.displayList(ll);
 				// Persist the linked list => db(words)
 				let currNode = ll.head;
-				console.log(currNode);
+				// console.log(currNode);
 				while (currNode !== null) {
-					LanguageService.updateLanguageWords(
+					await LanguageService.updateLanguageWords(
 						req.app.get('db'),
 						currNode.value.original,
-						currNode.value
+						{ ...currNode.value }
 					);
 					currNode = currNode.next;
 					if (currNode === null) {
@@ -136,7 +147,7 @@ languageRouter
 					head: ll.head.value.id
 				};
 				//
-				LanguageService.updateLanguage(
+				await LanguageService.updateLanguage(
 					req.app.get('db'),
 					req.user.id,
 					updatedLanguage
