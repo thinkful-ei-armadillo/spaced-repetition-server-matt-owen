@@ -111,7 +111,7 @@ languageRouter
 					memory_value
 				});
 				// mutate head location
-				let llLength = words.length;
+				let llLength = llHelpers.size(ll);
 				let llprevHead = ll.head.value;
 				ll.remove(ll.head);
 				// simulate decreased length of ll after removing head
@@ -120,9 +120,21 @@ languageRouter
 				// find the (memory_value - 1)th element, and places this one after it
 				// this should update nexts
 				console.log(llprevHead);
+				let counter = 0;
+				while (counter < llHelpers.size(ll)) {}
+
 				if (llprevHead.memory_value < llLength) {
 					// updating node.next value, but not node.value.next
 					ll.insertAt(memory_value, llprevHead);
+					// findPrevious node, update next to llprevHead.id
+					// ll.remove(ll.prevNode) ... remove prevnode from ll, re-add on end with new values (insertLast(updatedPrevNode))
+					// ll.find ... find llprevHeadNode, to check its ll.next.id, updatedllprevHeadNodeValue = {...llprevHeadNode.value, next: ll.next.id}
+					// remove newly inserted llprevHeadNode, insert updated llprevHead (with new next) at end of ll
+
+					// ll is read, order of ll doesnt matter because actual word question "nexts"
+					// are different from node nexts, aka ll.value.next !== ll.next
+
+					// database words are updated with ll.value.nexts, sequence of ll
 				} else if (llprevHead.memory_value >= llLength) {
 					ll.insertLast(llprevHead);
 				}
