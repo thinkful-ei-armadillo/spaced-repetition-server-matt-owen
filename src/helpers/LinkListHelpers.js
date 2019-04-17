@@ -39,7 +39,7 @@ const llHelper = {
 
   findLast(lst) {
     if (lst.head === null) {
-      return "list is empty";
+      return 'list is empty';
     }
     let tempNode = lst.head;
     while (tempNode.next !== null) {

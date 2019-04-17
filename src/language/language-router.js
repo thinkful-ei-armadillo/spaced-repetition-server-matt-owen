@@ -91,7 +91,7 @@ languageRouter
 				res.status(400).json({ error: `Missing 'guess' in request body` });
 			} else {
 				// need to check head value
-				// console.log(head);
+
 				let total_score = head.total_score;
 				let correct_count = head.correct_count;
 				let incorrect_count = head.incorrect_count;
@@ -115,6 +115,7 @@ languageRouter
 				// mutate head location
 				let llLength = llHelpers.size(ll);
 				let llprevHeadValue = ll.head.value;
+				console.log('removing ll.head');
 				ll.remove(ll.head);
 				// simulate decreased length of ll after removing head
 				llLength--;
@@ -124,32 +125,29 @@ languageRouter
 				// console.log(llprevHeadValue);
 				// let counter = 0;
 				// while (counter < llHelpers.size(ll)) {}
-				// console.log('here');
+
 				if (llprevHeadValue.memory_value < llLength) {
-					// console.log('before insert');
-					// updating node.next value, but not node.value.next
-					// console.log(`mvalue is ${memory_value}`);
 					ll.insertAt(llprevHeadValue.memory_value, llprevHeadValue);
-					// console.log('before update next');
-					// can we do object ===?
+
 					let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
+					console.log(prevNode);
 					let updatedPrevNode = prevNode;
 
 					updatedPrevNode.value.next = llprevHeadValue.id;
-					// console.log(llprevHeadValue.id);
-					console.log('updatedprevnodevalue');
-					console.log(updatedPrevNode.value);
-					console.log('----------------------');
-					ll.remove(prevNode);
-					ll.insertLast(updatedPrevNode);
+
+					console.log('removing prevnode correct');
+
+					ll.remove(prevNode.value);
+					ll.insertLast(updatedPrevNode.value);
 
 					let currNode = ll.find(llprevHeadValue);
 					let updatedCurrNode = currNode;
-					console.log(updatedCurrNode);
+
 					updatedCurrNode.value.next = currNode.next.value.id;
-					ll.remove(currNode);
-					ll.insertLast(updatedCurrNode);
-					// console.log('after updatenext');
+					console.log('removing current word node correct');
+					ll.remove(currNode.value);
+					ll.insertLast(updatedCurrNode.value);
+
 					// findPrevious node, update next to llprevHead.id
 					// ll.remove(ll.prevNode) ... remove prevnode from ll, re-add on end with new values (insertLast(updatedPrevNode))
 					// ll.find ... find llprevHeadNode, to check its ll.next.id, updatedllprevHeadNodeValue = {...llprevHeadNode.value, next: ll.next.id}
@@ -161,41 +159,42 @@ languageRouter
 					// database words are updated with ll.value.nexts
 				} else if (llprevHeadValue.memory_value >= llLength) {
 					ll.insertLast(llprevHeadValue);
-					// console.log('here');
+
 					let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
 					let updatedPrevNode = prevNode;
 
 					updatedPrevNode.value.next = llprevHeadValue.id;
-					// console.log(llprevHeadValue.id);
-					console.log('updatedprevnodevalue');
-					console.log(updatedPrevNode.value);
-					console.log('----------------------');
-					ll.remove(prevNode);
-					ll.insertLast(updatedPrevNode);
+
+					ll.remove(prevNode.value);
+					ll.insertLast(updatedPrevNode.value);
 
 					let currNode = ll.find(ll, llprevHeadValue);
 					let updatedCurrNode = currNode;
-					console.log(updatedCurrNode);
-					updatedCurrNode.value.next = currNode.next.value.id;
-					ll.remove(currNode);
-					ll.insertLast(updatedCurrNode);
-				}
-				// llHelpers.displayList(ll);
-				// Persist the linked list => db(words)
-				let currNode = ll.head;
 
-				while (currNode !== null) {
-					// console.log(currNode);
+					updatedCurrNode.value.next = currNode.next.value.id;
+					ll.remove(currNode.value);
+					ll.insertLast(updatedCurrNode.value);
+				}
+				llHelpers.displayList(ll);
+				// Persist the linked list => db(words)
+
+				let currNode = ll.head;
+				while (currNode.next !== null) {
 					await LanguageService.updateLanguageWords(
 						req.app.get('db'),
 						currNode.value.original,
-						currNode.value
+						{ ...currNode.value }
 					);
 					currNode = currNode.next;
-					if (currNode === null) {
-						break;
+					if (currNode.next === null) {
+						await LanguageService.updateLanguageWords(
+							req.app.get('db'),
+							currNode.value.original,
+							{ ...currNode.value }
+						);
 					}
 				}
+
 				// Persist new head and score => db(language)
 				let updatedLanguage = {
 					total_score: total_score,
