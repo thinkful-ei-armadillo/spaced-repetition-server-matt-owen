@@ -41,10 +41,10 @@ const LanguageService = {
 			.select('*')
 			.where('word.id', head);
 	},
-	updateLanguageWords(db, word, updateWord) {
+	updateLanguageWords(db, word_id, updateWord) {
 		return db
 			.from('word')
-			.where('original', word)
+			.where('id', word_id)
 			.update(updateWord);
 	},
 

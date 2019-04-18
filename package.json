@@ -11,7 +11,8 @@
 		"testmigrate": "postgrator --config postgrator-testdb-config.js",
 		"start": "node src/server.js",
 		"predeploy": "npm audit && npm run migrate-production",
-		"deploy": "git push heroku master"
+		"deploy": "git push heroku master",
+		"resetdb": "psql -U spacerep -d spacerep -f seeds/seed.tables.sql"
 	},
 	"keywords": [],
 	"author": "Tom `tomatao` HT <tomht@thinkful.com>",

@@ -46,6 +46,22 @@ const llHelper = {
       tempNode = tempNode.next;
     }
     return tempNode;
+  },
+
+  toArray(lst) {
+    if (lst.head === null) {
+      return 'list is empty';
+    }
+    let array = [];
+    let currNode = lst.head;
+    while (currNode.next !== null) {
+      array.push(currNode.value);
+      currNode = currNode.next;
+      if (currNode.next === null) {
+        array.push(currNode.value);
+      }
+    }
+    return array;
   }
 };
 

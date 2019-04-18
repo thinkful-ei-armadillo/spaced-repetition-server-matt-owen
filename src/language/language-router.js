@@ -7,21 +7,37 @@ const llMaker = require('../helpers/LinkListMaker');
 const llHelpers = require('../helpers/LinkListHelpers');
 
 function updateNexts(ll, llprevHeadValue) {
-	let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
+	// new idea : // i want to update using only the updated nodes
+	// let updatedWords = [];
+	// ==================================
 
+	let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
 	let updatedPrevNode = prevNode;
 
 	updatedPrevNode.value.next = llprevHeadValue.id;
-
+	// first implementation
 	ll.remove(prevNode.value);
+	// ===============================
 	ll.insertLast(updatedPrevNode.value);
+	// new idea
+	// updatedWords.push(updatedPrevNode.value);
+	// ==================================
 
 	let currNode = ll.find(llprevHeadValue);
 	let updatedCurrNode = currNode;
 
 	updatedCurrNode.value.next = currNode.next.value.id;
+
+	// first implementation
 	ll.remove(currNode.value);
+	// ==========================================
+
 	ll.insertLast(updatedCurrNode.value);
+
+	// new idea
+	// updatedWords.push(updatedCurrNode.value);
+	// ====================================
+	// return updatedWords;
 }
 
 languageRouter.use(requireAuth).use(async (req, res, next) => {
@@ -90,14 +106,15 @@ languageRouter
 				req.app.get('db'),
 				req.language.id
 			);
+			// is this already accessible in the context from dashboard load?  context.language.head?
 			let languageHead = await LanguageService.getLanguageHead(
 				req.app.get('db'),
 				req.user.id
 			);
-			// language head is language.head, an integer
+			// languageHead is language.head, an integer referring to a word.id
 			languageHead = languageHead[0].head;
 			let head = await LanguageService.getHead(req.app.get('db'), languageHead);
-			// head is the node, which will be ll.head
+			// head is the node, which will be ll.head in the word LL
 			head = head[0];
 
 			let ll = llMaker(words, head);
@@ -113,8 +130,9 @@ languageRouter
 				let incorrect_count = head.incorrect_count;
 				let translation = head.translation;
 				let memory_value = head.memory_value;
+				let CORRECT = guess === translation;
 
-				if (guess === translation) {
+				if (CORRECT) {
 					correct_count++;
 					total_score++;
 					memory_value *= 2;
@@ -129,34 +147,57 @@ languageRouter
 					memory_value
 				});
 				// mutate head location
-				let llLength = llHelpers.size(ll);
+
 				let llprevHeadValue = ll.head.value;
 				ll.remove(ll.head);
-				// simulate decreased length of ll after removing head
-				llLength--;
-
+				// change insertion method used to avoid errors from insertAt
+				let llLength = llHelpers.size(ll);
+				// let updatedLanguageWords;
 				if (llprevHeadValue.memory_value < llLength) {
 					ll.insertAt(llprevHeadValue.memory_value, llprevHeadValue);
+
+					// old
 					updateNexts(ll, llprevHeadValue);
+					// new
+					// updatedLanguageWords = updateNexts(ll, llprevHeadValue);
 				} else if (llprevHeadValue.memory_value >= llLength) {
 					ll.insertLast(llprevHeadValue);
+
+					// old
 					updateNexts(ll, llprevHeadValue);
+					// new
+					// updatedLanguageWords = updateNexts(ll, llprevHeadValue);
 				}
 
 				// persist the updated word order
-
+				let updatedLanguageWords = llHelpers.toArray(ll);
+				console.log(updatedLanguageWords);
+				llHelpers.displayList(ll);
+				// have update nexts push those nodes to an array rather than back into the ll, use that array as the collection of updatedWords
+				await updatedLanguageWords.forEach(wordObj => {
+					let wordObjUpdate = {
+						correct_count: wordObj.correct_count,
+						incorrect_count: wordObj.incorrect_count,
+						next: wordObj.next,
+						memory_value: wordObj.memory_value
+					};
+					console.log(wordObj);
+					LanguageService.updateLanguageWords(req.app.get('db'), wordObj.id, {
+						...wordObj
+					});
+				});
 				let currNode = ll.head;
 				while (currNode.next !== null) {
 					await LanguageService.updateLanguageWords(
 						req.app.get('db'),
-						currNode.value.original,
+						currNode.value.id,
 						{ ...currNode.value }
 					);
 					currNode = currNode.next;
 					if (currNode.next === null) {
 						await LanguageService.updateLanguageWords(
 							req.app.get('db'),
-							currNode.value.original,
+							currNode.value.id,
 							{ ...currNode.value }
 						);
 					}
@@ -175,7 +216,7 @@ languageRouter
 				);
 				// send correct/incorrect response
 				// the difference is isCorrect
-				if (guess === translation) {
+				if (CORRECT) {
 					res.status(200).json({
 						nextWord: ll.head.value.original,
 						totalScore: total_score,
