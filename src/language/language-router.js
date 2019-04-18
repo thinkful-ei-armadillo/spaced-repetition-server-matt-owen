@@ -7,46 +7,21 @@ const llMaker = require('../helpers/LinkListMaker');
 const llHelpers = require('../helpers/LinkListHelpers');
 
 function updateNexts(ll, llprevHeadValue) {
-	// new idea : i want to update using only the updated nodes
-	// let updatedWords = [];
-	// ==================================
-
+	let updatedWords = [];
 	let prevNode = llHelpers.findPrevious(ll, llprevHeadValue);
 	let updatedPrevNode = prevNode;
 
 	updatedPrevNode.value.next = llprevHeadValue.id;
-	// first implementation
-	ll.remove(prevNode.value);
-	// ===============================
-	ll.insertLast(updatedPrevNode.value);
-	// new idea
-	// updatedWords.push(updatedPrevNode.value);
-	// ==================================
-
+	updatedWords.push(updatedPrevNode.value);
 	let currNode = ll.find(llprevHeadValue);
 	let updatedCurrNode = currNode;
-
-	updatedCurrNode.value.next = currNode.next.value.id;
-
-	// first implementation
-
-	let currNode = ll.find(llprevHeadValue);
-	let updatedCurrNode = currNode;
-
 	if (!currNode.next) {
 		updatedCurrNode.value.next = null;
 	} else {
 		updatedCurrNode.value.next = currNode.next.value.id;
 	}
-	ll.insertLast(updatedPrevNode.value);
-	ll.remove(currNode.value);
-	ll.insertLast(updatedCurrNode.value);
-	// ==========================================
-
-	// new idea
-	// updatedWords.push(updatedCurrNode.value);
-	// ====================================
-	// return updatedWords;
+	updatedWords.push(updatedCurrNode.value);
+	return updatedWords;
 }
 
 languageRouter.use(requireAuth).use(async (req, res, next) => {
@@ -115,7 +90,6 @@ languageRouter
 				req.app.get('db'),
 				req.language.id
 			);
-			// is this already accessible in the context from dashboard load?  context.language.head?
 			let languageHead = await LanguageService.getLanguageHead(
 				req.app.get('db'),
 				req.user.id
@@ -131,8 +105,6 @@ languageRouter
 			if (!guess) {
 				res.status(400).json({ error: `Missing 'guess' in request body` });
 			} else {
-				// need to check head value
-
 				let total_score = head.total_score;
 				let correct_count = head.correct_count;
 				let incorrect_count = head.incorrect_count;
@@ -148,68 +120,39 @@ languageRouter
 					incorrect_count++;
 					memory_value = 1;
 				}
-				// write changes into head
+
 				Object.assign(ll.head.value, {
 					correct_count,
 					incorrect_count,
 					memory_value
 				});
-				// mutate head location
 
 				let llprevHeadValue = ll.head.value;
 				ll.remove(ll.head);
-				// change insertion method used to avoid errors from insertAt
 				let llLength = llHelpers.size(ll);
-				// let updatedLanguageWords;
+				let updatedLanguageWords;
 				if (llprevHeadValue.memory_value < llLength) {
 					ll.insertAt(llprevHeadValue.memory_value, llprevHeadValue);
-
-					// old
-					updateNexts(ll, llprevHeadValue);
-					// new
-					// updatedLanguageWords = updateNexts(ll, llprevHeadValue);
+					updatedLanguageWords = updateNexts(ll, llprevHeadValue);
 				} else if (llprevHeadValue.memory_value >= llLength) {
 					ll.insertLast(llprevHeadValue);
-
-					// old
-					updateNexts(ll, llprevHeadValue);
-					// new
-					// updatedLanguageWords = updateNexts(ll, llprevHeadValue);
+					updatedLanguageWords = updateNexts(ll, llprevHeadValue);
 				}
 
 				// persist the updated word order
-				let updatedLanguageWords = llHelpers.toArray(ll);
-				console.log(updatedLanguageWords);
-				llHelpers.displayList(ll);
-				// have update nexts push those nodes to an array rather than back into the ll, use that array as the collection of updatedWords
-				await updatedLanguageWords.forEach(wordObj => {
+				updatedLanguageWords.forEach(async wordObj => {
 					let wordObjUpdate = {
 						correct_count: wordObj.correct_count,
 						incorrect_count: wordObj.incorrect_count,
 						next: wordObj.next,
 						memory_value: wordObj.memory_value
 					};
-					console.log(wordObj);
-					LanguageService.updateLanguageWords(req.app.get('db'), wordObj.id, {
-						...wordObj
-					});
-				});
-				let currNode = ll.head;
-				while (currNode.next !== null) {
 					await LanguageService.updateLanguageWords(
 						req.app.get('db'),
-						currNode.value.id,
-						{ ...currNode.value }
+						wordObj.id,
+						wordObjUpdate
 					);
-					currNode = currNode.next;
-					if (currNode.next === null) {
-						await LanguageService.updateLanguageWords(
-							req.app.get('db'),
-							currNode.value.id,
-							{ ...currNode.value }
-						);
-					}
-				}
+				});
 
 				// Persist new head and score => db(language)
 				let updatedLanguage = {
@@ -224,7 +167,6 @@ languageRouter
 				);
 
 				// send correct/incorrect response
-				// the difference is isCorrect
 				if (CORRECT) {
 					res.status(200).json({
 						nextWord: ll.head.value.original,
