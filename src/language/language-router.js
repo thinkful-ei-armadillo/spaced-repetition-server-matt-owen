@@ -7,7 +7,7 @@ const llMaker = require('../helpers/LinkListMaker');
 const llHelpers = require('../helpers/LinkListHelpers');
 
 function updateNexts(ll, llprevHeadValue) {
-	// new idea : // i want to update using only the updated nodes
+	// new idea : i want to update using only the updated nodes
 	// let updatedWords = [];
 	// ==================================
 
@@ -29,10 +29,19 @@ function updateNexts(ll, llprevHeadValue) {
 	updatedCurrNode.value.next = currNode.next.value.id;
 
 	// first implementation
-	ll.remove(currNode.value);
-	// ==========================================
 
+	let currNode = ll.find(llprevHeadValue);
+	let updatedCurrNode = currNode;
+
+	if (!currNode.next) {
+		updatedCurrNode.value.next = null;
+	} else {
+		updatedCurrNode.value.next = currNode.next.value.id;
+	}
+	ll.insertLast(updatedPrevNode.value);
+	ll.remove(currNode.value);
 	ll.insertLast(updatedCurrNode.value);
+	// ==========================================
 
 	// new idea
 	// updatedWords.push(updatedCurrNode.value);
@@ -118,7 +127,6 @@ languageRouter
 			head = head[0];
 
 			let ll = llMaker(words, head);
-			// llHelpers.displayList(ll);
 
 			if (!guess) {
 				res.status(400).json({ error: `Missing 'guess' in request body` });
@@ -214,6 +222,7 @@ languageRouter
 					req.user.id,
 					updatedLanguage
 				);
+
 				// send correct/incorrect response
 				// the difference is isCorrect
 				if (CORRECT) {
