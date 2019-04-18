@@ -14,12 +14,17 @@ function updateNexts(ll, llprevHeadValue) {
 	updatedPrevNode.value.next = llprevHeadValue.id;
 
 	ll.remove(prevNode.value);
-	ll.insertLast(updatedPrevNode.value);
-
+	
 	let currNode = ll.find(llprevHeadValue);
 	let updatedCurrNode = currNode;
-
-	updatedCurrNode.value.next = currNode.next.value.id;
+	
+	if(!currNode.next) {
+		updatedCurrNode.value.next = null;
+	}
+	else{
+		updatedCurrNode.value.next = currNode.next.value.id;
+	}
+	ll.insertLast(updatedPrevNode.value);
 	ll.remove(currNode.value);
 	ll.insertLast(updatedCurrNode.value);
 }
@@ -99,10 +104,9 @@ languageRouter
 			let head = await LanguageService.getHead(req.app.get('db'), languageHead);
 			// head is the node, which will be ll.head
 			head = head[0];
-
+			
 			let ll = llMaker(words, head);
-			// llHelpers.displayList(ll);
-
+			
 			if (!guess) {
 				res.status(400).json({ error: `Missing 'guess' in request body` });
 			} else {
@@ -173,6 +177,7 @@ languageRouter
 					req.user.id,
 					updatedLanguage
 				);
+
 				// send correct/incorrect response
 				// the difference is isCorrect
 				if (guess === translation) {
